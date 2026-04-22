@@ -119,8 +119,9 @@
           </div>
           <div v-for="(p, i) in leaderboard" :key="p.name" class="stat-row">
             <span class="stat-rank">{{ ['🥇','🥈','🥉','🦆','🐌','🪑'][i] }}</span>
-            <span>{{ p.name }}</span>
+            <span class="stat-name">{{ p.name }}</span>
             <span class="stat-wins">{{ p.wins }}V</span>
+            <span class="stat-losses">{{ p.losses }}D</span>
           </div>
           <button class="btn-primary" style="margin-top:1.25rem" @click="showLeaderboard = false">
             Fermer
@@ -183,17 +184,20 @@ function setWinner(matchIdx, teamIdx) {
 }
 
 const leaderboard = computed(() => {
-  const wins = {}
+  const stats = {}
+  names.value.forEach(n => { stats[n] = { wins: 0, losses: 0 } })
   schedule.value.forEach(session => {
     session.matches.forEach(match => {
       if (match.winner !== null) {
         const winners = match.winner === 0 ? match.team1 : match.team2
-        winners.forEach(p => { wins[p] = (wins[p] || 0) + 1 })
+        const losers = match.winner === 0 ? match.team2 : match.team1
+        winners.forEach(p => { if (stats[p]) stats[p].wins++ })
+        losers.forEach(p => { if (stats[p]) stats[p].losses++ })
       }
     })
   })
-  return Object.entries(wins)
-    .map(([name, w]) => ({ name, wins: w }))
-    .sort((a, b) => b.wins - a.wins)
+  return Object.entries(stats)
+    .map(([name, s]) => ({ name, ...s }))
+    .sort((a, b) => b.wins - a.wins || a.losses - b.losses)
 })
 </script>

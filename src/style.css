@@ -441,10 +441,18 @@ h2:first-child { margin-top: 0; }
 }
 .stat-row:last-child { border-bottom: none; }
 .stat-rank { font-size: 1.3rem; width: 1.8rem; }
+.stat-name { flex: 1; }
 .stat-wins {
   color: var(--success);
   font-family: var(--font-display);
   font-size: 1.1rem;
   letter-spacing: 1px;
-  margin-left: auto;
+}
+.stat-losses {
+  color: #f87171;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  min-width: 2.5rem;
+  text-align: right;
 }
