@@ -118,7 +118,7 @@
             Aucun match enregistré
           </div>
           <div v-for="(p, i) in leaderboard" :key="p.name" class="stat-row">
-            <span class="stat-rank">{{ ['🥇','🥈','🥉'][i] || `${i+1}.` }}</span>
+            <span class="stat-rank">{{ ['🥇','🥈','🥉','🎖️','🏅','🎗️'][i] }}</span>
             <span>{{ p.name }}</span>
             <span class="stat-wins">{{ p.wins }}V</span>
           </div>
