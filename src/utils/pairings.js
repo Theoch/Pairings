@@ -1,64 +1,58 @@
-function pairKey(i, j) {
-  return `${Math.min(i, j)}-${Math.max(i, j)}`
-}
+// 1-factorization of K_n: generates perfect pair sessions where no partner repeats
+// For 6 players → 5 sessions of 3 pairs each
+// For 4 players → 3 sessions of 2 pairs each
 
-function getAllPairs(arr) {
-  const pairs = []
-  for (let i = 0; i < arr.length; i++)
-    for (let j = i + 1; j < arr.length; j++)
-      pairs.push([arr[i], arr[j]])
-  return pairs
-}
+function buildSessions(players) {
+  const n = players.length // 4 or 6
+  const indices = players.map((_, i) => i)
 
-function findMatchup(playing, usedPairs) {
-  const [a, b, c, d] = playing
-  const options = [[[a, b], [c, d]], [[a, c], [b, d]], [[a, d], [b, c]]]
-  for (const [p1, p2] of options) {
-    if (!usedPairs.has(pairKey(...p1)) && !usedPairs.has(pairKey(...p2)))
-      return [p1, p2]
-  }
-  return null
-}
+  // Circle method: fix index 0, rotate the rest
+  const sessions = []
+  const rotating = indices.slice(1) // indices 1..n-1
 
-function findRound(indices, usedPairs, sitCounts) {
-  const n = indices.length
-
-  if (n === 4) {
-    const matchup = findMatchup(indices, usedPairs)
-    return matchup ? { teams: matchup, sitting: [] } : null
+  for (let r = 0; r < n - 1; r++) {
+    const circle = [indices[0], ...rotating]
+    const pairs = []
+    for (let i = 0; i < n / 2; i++) {
+      pairs.push([circle[i], circle[n - 1 - i]])
+    }
+    sessions.push(pairs)
+    // rotate: move last element to front of rotating
+    rotating.unshift(rotating.pop())
   }
 
-  // n === 6: choose 2 to sit out, prefer those who sat out least
-  const sitOptions = getAllPairs(indices).sort(
-    (a, b) => (sitCounts[a[0]] + sitCounts[a[1]]) - (sitCounts[b[0]] + sitCounts[b[1]])
-  )
+  return sessions.map(pairs => ({
+    pairs: pairs.map(([i, j]) => [players[i], players[j]]),
+    matches: buildMatches(pairs.map(([i, j]) => [players[i], players[j]])),
+  }))
+}
 
-  for (const sitting of sitOptions) {
-    const playing = indices.filter(i => !sitting.includes(i))
-    const matchup = findMatchup(playing, usedPairs)
-    if (matchup) return { teams: matchup, sitting }
+function buildMatches(pairs) {
+  // All combinations of pairs playing each other
+  const matches = []
+  for (let i = 0; i < pairs.length; i++) {
+    for (let j = i + 1; j < pairs.length; j++) {
+      const sitting = pairs.filter((_, k) => k !== i && k !== j)
+      matches.push({
+        team1: pairs[i],
+        team2: pairs[j],
+        sitting: sitting.flat(),
+        winner: null,
+      })
+    }
   }
-  return null
+  return matches
+}
+
+function shuffle(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
 }
 
 export function generateSchedule(playerNames) {
-  const n = playerNames.length
-  const indices = playerNames.map((_, i) => i)
-  const usedPairs = new Set()
-  const sitCounts = new Array(n).fill(0)
-  const rounds = []
-
-  while (true) {
-    const round = findRound(indices, usedPairs, sitCounts)
-    if (!round) break
-    round.teams.forEach(([i, j]) => usedPairs.add(pairKey(i, j)))
-    round.sitting.forEach(i => sitCounts[i]++)
-    rounds.push({
-      teams: round.teams.map(([i, j]) => [playerNames[i], playerNames[j]]),
-      sitting: round.sitting.map(i => playerNames[i]),
-      winner: null
-    })
-  }
-
-  return rounds
+  return buildSessions(shuffle(playerNames))
 }
